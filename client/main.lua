@@ -32,7 +32,7 @@ end
 local function closestHuntingWagon(coords)
     local closest, closestDistance
     for _, vehicle in ipairs(GetGamePool("CVehicle")) do
-        if DoesEntityExist(vehicle) and GetEntityModel(vehicle) == Config.WagonModel then
+        if DoesEntityExist(vehicle) and NetworkGetEntityIsNetworked(vehicle) and GetEntityModel(vehicle) == Config.WagonModel then
             local rear = GetOffsetFromEntityInWorldCoords(vehicle, 0.0, -2.3, 0.4)
             local distance = #(coords - rear)
             if not closestDistance or distance < closestDistance then closest, closestDistance = vehicle, distance end
@@ -63,8 +63,26 @@ local function storeCargo(wagon, cargo)
         TriggerEvent("fortuna_huntingwagon:notify", _U("invalid"))
         return
     end
+    if not NetworkGetEntityIsNetworked(cargo) then
+        SetEntityAsMissionEntity(cargo, true, true)
+        NetworkRegisterEntityAsNetworked(cargo)
+        local timeout = GetGameTimer() + 2000
+        while DoesEntityExist(cargo) and not NetworkGetEntityIsNetworked(cargo) and GetGameTimer() < timeout do
+            Wait(25)
+            NetworkRegisterEntityAsNetworked(cargo)
+        end
+    end
+    if not NetworkGetEntityIsNetworked(cargo) then
+        TriggerEvent("fortuna_huntingwagon:notify", _U("store_failed"))
+        return
+    end
+    local cargoNetId = NetworkGetNetworkIdFromEntity(cargo)
+    if not cargoNetId or cargoNetId == 0 then
+        TriggerEvent("fortuna_huntingwagon:notify", _U("store_failed"))
+        return
+    end
     local isPelt = GetEntityType(cargo) == 3
-    TriggerServerEvent("fortuna_huntingwagon:store", VehToNet(wagon), NetworkGetNetworkIdFromEntity(cargo), {
+    TriggerServerEvent("fortuna_huntingwagon:store", VehToNet(wagon), cargoNetId, {
         model = GetEntityModel(cargo),
         quality = isPelt and 0 or Citizen.InvokeNative(0x7BCC6087D130312A, cargo),
         peltQuality = isPelt and Citizen.InvokeNative(0x31FEF6A20F00B963, cargo) or 0,
@@ -250,12 +268,17 @@ RegisterNetEvent("fortuna_huntingwagon:spawnCargo", function(wagonNetId, entry)
         return
     end
     SetEntityAsMissionEntity(cargo, true, true)
-    local cargoNetId = NetworkGetNetworkIdFromEntity(cargo)
     local netTimeout = GetGameTimer() + 2000
-    while cargoNetId == 0 and GetGameTimer() < netTimeout do
+    while DoesEntityExist(cargo) and not NetworkGetEntityIsNetworked(cargo) and GetGameTimer() < netTimeout do
+        NetworkRegisterEntityAsNetworked(cargo)
         Wait(25)
-        cargoNetId = NetworkGetNetworkIdFromEntity(cargo)
     end
+    if not NetworkGetEntityIsNetworked(cargo) then
+        DeleteEntity(cargo)
+        TriggerServerEvent("fortuna_huntingwagon:restore")
+        return
+    end
+    local cargoNetId = NetworkGetNetworkIdFromEntity(cargo)
     if cargoNetId == 0 then
         DeleteEntity(cargo)
         TriggerServerEvent("fortuna_huntingwagon:restore")

@@ -19,7 +19,7 @@
 | Field | Information |
 | --- | --- |
 | Resource | `fortuna_huntingwagon` |
-| Version | `2.2.0` |
+| Version | `2.2.1` |
 | Author | `pichirin_cb` / CB Studios |
 | Platform | RedM |
 | Type | Standalone script |

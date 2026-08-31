@@ -2,6 +2,15 @@
 
 All notable changes to Fortuna Hunting Wagon are documented here.
 
+## 2.2.1 - 2026-08-31
+
+- Fixed `NETWORK_GET_NETWORK_ID_FROM_ENTITY: no net object for entity` warnings when storing locally spawned hunting cargo.
+- Local animals and pelts are now registered as networked entities before requesting their network ID.
+- Added a bounded wait for RedM network registration before storage.
+- Prevented cargo loss when an entity cannot be synchronized with the network.
+- Retrieved cargo now waits for a valid network state before server confirmation.
+- Ambient and local non-networked hunting wagons are ignored during wagon detection.
+
 ## 2.2.0 - 2026-08-31
 
 - Added verified small, medium, medium-large and additional large hunting-pelt models to wagon cargo validation.
