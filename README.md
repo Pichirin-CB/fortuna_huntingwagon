@@ -1,3 +1,10 @@
+<p align="center">
+  <img src=".github/assets/fortuna-hunting-wagon-banner.png"
+       alt="Fortuna Hunting Wagon — CB Studios"
+       width="100%">
+</p>
+
+<br>
 
 ██████╗ ███████╗ █████╗ ██████╗ ███╗   ███╗███████╗ 
 ██╔══██╗██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔════╝ 
