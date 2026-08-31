@@ -1,0 +1,7 @@
+.env
+.env.*
+server.cfg
+*.log
+Thumbs.db
+.DS_Store
+
