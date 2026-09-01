@@ -1,10 +1,4 @@
-<p align="center">
-  <img src=".github/assets/fortuna-hunting-wagon-banner.png"
-       alt="Fortuna Hunting Wagon — CB Studios"
-       width="100%">
-</p>
-
-<br>
+![Fortuna Hunting Wagon](.github/assets/fortuna-hunting-wagon-banner.png)
 
 ██████╗ ███████╗ █████╗ ██████╗ ███╗   ███╗███████╗ 
 ██╔══██╗██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔════╝ 
@@ -41,6 +35,8 @@ The resource is server-authoritative and requires no database, targeting system,
 - Server-side validation of wagon, cargo model, entity type, distance, health and capacity.
 - Anti-duplication retrieval flow with reserved cargo and automatic recovery.
 - Support for carried pelts and nearby large carcasses that cannot normally be lifted.
+- Safe network registration for locally spawned animals and pelts before storage.
+- Protection against cargo loss when an entity cannot obtain a valid network ID.
 - Native hunting-wagon tarp visualization without fake sellable entities.
 - Restoration of pelt quality, carcass quality and skinned state after retrieval.
 - Configurable public, ACE, state-bag or custom wagon access.
@@ -259,6 +255,8 @@ The resource was designed around the native RedM hunting wagon and tested alongs
 
 Retrieval uses last-in, first-out order. The script tries to place retrieved cargo in the player's hands; if the game rejects the carrying task, the entity remains physically available behind the wagon.
 
+Only networked hunting wagons are considered valid. Locally spawned animals and pelts are registered on the network before storage, with a bounded wait for a valid network ID. If synchronization fails, storage is cancelled and the original cargo remains available instead of being deleted.
+
 ---------------------------------------------------------------------------
 
 # Developer Integration
@@ -334,6 +332,16 @@ Do not overwrite a newer configuration with an older copy without comparing its 
 - Stand near the rear of the wagon.
 - Verify the configured interaction distance and control.
 - Confirm the client script started without errors.
+- Confirm the wagon is networked. Ambient or locally created wagons without a valid network ID are intentionally ignored.
+
+## Console reports `NETWORK_GET_NETWORK_ID_FROM_ENTITY: no net object for entity`
+
+- Confirm you are running Fortuna Hunting Wagon `2.2.1` or newer.
+- Verify another resource is not replacing or deleting the carried entity during storage.
+- Confirm the animal, pelt and wagon can be registered as networked entities.
+- If the warning comes from a custom integration, check that the entity exists and is networked before requesting its network ID.
+
+Version `2.2.1` registers local hunting cargo before requesting its network ID and cancels storage safely when registration cannot complete.
 
 ## Large animal cannot be carried
 
@@ -364,8 +372,12 @@ This is expected only when `Config.Persistence.Enabled` is `false`. If persisten
 - The server validates capacity, cargo size, model, entity type, health and distance.
 - Living peds, unsupported models and distant entities are rejected.
 - Store operations lock the player and wagon and commit only after deletion is confirmed.
+- Locally spawned cargo is registered as a networked entity before its network ID is requested.
+- Storage is cancelled without deleting the cargo if network registration times out.
 - Retrieved cargo reserves capacity until the new network entity is validated.
+- Retrieved entities wait for a valid network state before the server confirms delivery.
 - Failed or timed-out retrievals are restored when the wagon still exists.
+- Non-networked ambient or local hunting wagons are excluded from client detection.
 - Network IDs are paired with entity handles to prevent cargo inheritance by a replacement wagon.
 - Public exports expose status but cannot inject arbitrary cargo.
 - Cargo is session-only by default; optional persistence binds it to a server-verified permanent stable ID.
